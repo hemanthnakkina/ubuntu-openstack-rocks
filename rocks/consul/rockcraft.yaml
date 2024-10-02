@@ -1,0 +1,44 @@
+name: consul
+summary: Hashicorp Consul
+license: Apache-2.0
+description: |
+  Ubuntu distribution of Hashicorp Consul
+version: "1.19.2"
+base: bare
+build-base: ubuntu@24.04
+platforms:
+  amd64:
+
+run-user: _daemon_
+
+services:
+  consul:
+    override: replace
+    command: bin/consul agent
+    user: consul
+    group: consul
+
+parts:
+  consul-user:
+    plugin: nil
+    override-prime: |
+      craftctl default
+      # Give permission and create the required directories
+      mkdir -p $CRAFT_PRIME/etc || true
+      echo "consul:x:5996:" >> $CRAFT_PRIME/etc/group
+      echo "consul:x:5996:5996::/var/lib/consul:/usr/bin/false" >> $CRAFT_PRIME/etc/passwd
+      folders=(var/lib/consul etc/consul.d)
+      for folder in "${folders[@]}"; do
+        mkdir -p $CRAFT_PRIME/$folder || true
+        chown -R 5996:5996 $CRAFT_PRIME/$folder
+      done
+
+  snap-consul-client:
+    after: [consul-user]
+    stage-packages:
+      # following are just for debug purposes
+      - bash_bins
+      - coreutils_bins
+    plugin: nil
+    stage-snaps:
+      - consul-client/latest/edge
