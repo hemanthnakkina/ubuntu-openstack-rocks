@@ -3,49 +3,42 @@ summary: Hashicorp Consul
 license: Apache-2.0
 description: |
   Ubuntu distribution of Hashicorp Consul
-version: 'v1.19.2'
-
-# renovate: base: ubuntu:22.04@sha256:1b8d8ff4777f36f19bfe73ee4df61e3a0b789caeff29caa019539ec7c9a57f95
-base: ubuntu@22.04
+version: "1.19.2"
+base: bare
+build-base: ubuntu@24.04
 platforms:
   amd64:
 
-package-repositories:
-  - type: apt
-    cloud: caracal
-    priority: always
+run-user: _daemon_
 
 services:
   consul:
     override: replace
-    command: consul
+    command: bin/consul agent
+    user: consul
+    group: consul
 
 parts:
   consul-user:
     plugin: nil
-    overlay-script: |
-      groupadd --root $CRAFT_OVERLAY --gid 5996 --system consul
-      useradd \
-        --gid 5996 \
-        --uid 5996 \
-        --no-create-home \
-        --home /var/lib/consul \
-        --root $CRAFT_OVERLAY \
-        --system \
-        --shell /bin/false \
-        consul
     override-prime: |
       craftctl default
-
       # Give permission and create the required directories
-      mkdir -p $CRAFT_PRIME/var/lib/consul
-      chown -R 5996:5996 $CRAFT_PRIME/var/lib/consul
+      mkdir -p $CRAFT_PRIME/etc || true
+      echo "consul:x:5996:" >> $CRAFT_PRIME/etc/group
+      echo "consul:x:5996:5996::/var/lib/consul:/usr/bin/false" >> $CRAFT_PRIME/etc/passwd
+      folders=(var/lib/consul etc/consul.d)
+      for folder in "${folders[@]}"; do
+        mkdir -p $CRAFT_PRIME/$folder || true
+        chown -R 5996:5996 $CRAFT_PRIME/$folder
+      done
 
-  snap-consul-client: # replace with consul snap once it is available
+  snap-consul-client:
     after: [consul-user]
+    stage-packages:
+      # following are just for debug purposes
+      - bash_bins
+      - coreutils_bins
     plugin: nil
     stage-snaps:
-    - consul-client/latest/edge
-    override-prime: |
-      mkdir -p $CRAFT_PRIME/usr/local/bin
-      cp /root/parts/$CRAFT_PART_NAME/install/consul $CRAFT_PRIME/usr/local/bin/consul
+      - consul-client/latest/edge
