@@ -44,6 +44,7 @@ parts:
       - python3-magnum-ui
       - python3-octavia-dashboard
       - python3-watcher-dashboard
+      - python3-masakari-dashboard
     override-stage: |
       craftctl default
       echo > $CRAFT_STAGE/etc/apache2/ports.conf
@@ -57,6 +58,7 @@ parts:
       _2370_admin_container_infra_panel_group.py
       _2371_admin_container_infra_quotas_panel.py" > $CRAFT_STAGE/$AVAILABLE/magnum
       echo "_1482_project_load_balancer_panel.py" > $CRAFT_STAGE/$AVAILABLE/octavia
+      echo "_50_masakaridashboard.py" > $CRAFT_STAGE/$AVAILABLE/masakari
       echo "_1610_project_orchestration_panel.py
       _1620_project_stacks_panel.py
       _1630_project_resource_types_panel.py
@@ -75,6 +77,7 @@ parts:
       OS_DASHBOARD=usr/lib/python3/dist-packages/openstack_dashboard
       AVAILABLE=$OS_DASHBOARD/available
       ENABLED=$OS_DASHBOARD/enabled
+      LOCAL_ENABLED=$OS_DASHBOARD/local/enabled
       mkdir -p $CRAFT_PRIME/$AVAILABLE || true
 
       plugin_files=$(ls $CRAFT_STAGE/$AVAILABLE)
@@ -83,8 +86,15 @@ parts:
         cp $CRAFT_STAGE/$AVAILABLE/$plugin_file $CRAFT_PRIME/$AVAILABLE/$plugin_file
         while read line; do
           enable_file=$CRAFT_STAGE/$ENABLED/$line
+          local_enable_file=$CRAFT_STAGE/$LOCAL_ENABLED/$line
           available_file=$CRAFT_PRIME/$AVAILABLE/$line
-          [[ ! -f $enable_file ]] || mv $enable_file $available_file
+
+          if [[ -f $enable_file ]]; then
+              mv $enable_file $available_file
+          elif [[ -f $local_enable_file ]]; then
+              mv $local_enable_file $available_file
+          fi
+
           [[ -f $available_file ]] || (echo "File $available_file not found" && exit 1)
         done < $CRAFT_STAGE/$AVAILABLE/$plugin_file
       done
