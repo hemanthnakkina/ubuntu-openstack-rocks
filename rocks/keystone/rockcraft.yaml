@@ -44,6 +44,7 @@ parts:
       - libapache2-mod-auth-gssapi
       - libapache2-mod-auth-mellon
       - libapache2-mod-auth-openidc
+      - libapache2-mod-oauth2
       - python3-ldappool
       - python3-requests-kerberos
     override-prime: |
