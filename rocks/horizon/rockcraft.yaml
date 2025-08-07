@@ -50,6 +50,7 @@ parts:
       - python3-octavia-dashboard
       - python3-watcher-dashboard
       - python3-masakari-dashboard
+      - python3-cloudkitty-dashboard
     override-stage: |
       craftctl default
       echo > $CRAFT_STAGE/etc/apache2/ports.conf
