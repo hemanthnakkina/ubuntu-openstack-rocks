@@ -47,6 +47,7 @@ parts:
       # Horizon plugins needing manual management
       - python3-heat-dashboard
       - python3-magnum-ui
+      - python3-manila-ui
       - python3-octavia-dashboard
       - python3-watcher-dashboard
       - python3-masakari-dashboard
@@ -63,6 +64,26 @@ parts:
       _1372_project_container_infra_cluster_templates_panel.py
       _2370_admin_container_infra_panel_group.py
       _2371_admin_container_infra_quotas_panel.py" > $CRAFT_STAGE/$AVAILABLE/magnum
+      echo "_80_manila_admin_add_share_panel_group.py
+      _80_manila_project_add_share_panel_group.py
+      _9010_manila_admin_add_shares_panel_to_share_panel_group.py
+      _9010_manila_project_add_shares_panel_to_share_panel_group.py
+      _9020_manila_admin_add_share_snapshots_panel_to_share_panel_group.py
+      _9020_manila_project_add_share_snapshots_panel_to_share_panel_group.py
+      _9030_manila_admin_add_share_types_panel_to_share_panel_group.py
+      _9040_manila_admin_add_share_networks_panel_to_share_panel_group.py
+      _9040_manila_project_add_share_networks_panel_to_share_panel_group.py
+      _9050_manila_admin_add_security_services_panel_to_share_panel_group.py
+      _9050_manila_project_add_security_services_panel_to_share_panel_group.py
+      _9060_manila_admin_add_share_servers_panel_to_share_panel_group.py
+      _9070_manila_admin_add_share_instances_panel_to_share_panel_group.py
+      _9080_manila_admin_add_share_groups_panel_to_share_panel_group.py
+      _9080_manila_project_add_share_groups_panel_to_share_panel_group.py
+      _9085_manila_admin_add_share_group_snapshots_panel_to_share_panel_group.py
+      _9085_manila_project_add_share_group_snapshots_panel_to_share_panel_group.py
+      _9090_manila_admin_add_share_group_types_panel_to_share_panel_group.py
+      _9095_manila_admin_add_user_messages_panel_to_share_panel_group.py
+      _9095_manila_project_add_user_messages_panel_to_share_panel_group.py" > $CRAFT_STAGE/$AVAILABLE/manila
       echo "_1482_project_load_balancer_panel.py" > $CRAFT_STAGE/$AVAILABLE/octavia
       echo "_50_masakaridashboard.py" > $CRAFT_STAGE/$AVAILABLE/masakari
       echo "_1610_project_orchestration_panel.py
@@ -100,8 +121,8 @@ parts:
         echo "Processing $plugin_file"
         cp $CRAFT_STAGE/$AVAILABLE/$plugin_file $CRAFT_PRIME/$AVAILABLE/$plugin_file
         while read line; do
-          enable_file=$CRAFT_STAGE/$ENABLED/$line
-          local_enable_file=$CRAFT_STAGE/$LOCAL_ENABLED/$line
+          enable_file=$CRAFT_PRIME/$ENABLED/$line
+          local_enable_file=$CRAFT_PRIME/$LOCAL_ENABLED/$line
           available_file=$CRAFT_PRIME/$AVAILABLE/$line
 
           if [[ -f $enable_file ]]; then
