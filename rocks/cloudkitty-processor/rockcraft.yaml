@@ -42,8 +42,6 @@ parts:
     plugin: nil
     overlay-packages:
       - sudo
-      - apache2
-      - libapache2-mod-wsgi-py3
       - cloudkitty-processor
     override-prime: |
       craftctl default
