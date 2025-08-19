@@ -13,6 +13,8 @@ package-repositories:
   - type: apt
     cloud: epoxy
     priority: always
+  - type: apt
+    ppa: canonical-openstack/magnum-capi-helm
 
 parts:
   magnum-user:
@@ -33,12 +35,18 @@ parts:
   magnum-consolidated:
     after: [magnum-user]
     plugin: nil
+    stage-snaps:
+      - helm/latest/stable
     overlay-packages:
       - sudo
       - apache2
       - libapache2-mod-wsgi-py3
       - magnum-api
       - magnum-conductor
+      - python3-magnum-capi-helm
     override-prime: |
       craftctl default
       echo > $CRAFT_PRIME/etc/apache2/ports.conf
+
+      # Move helm package to bin
+      mv $CRAFT_PRIME/helm $CRAFT_PRIME/usr/bin/
