@@ -11,7 +11,9 @@ platforms:
 
 package-repositories:
   - type: apt
-    cloud: epoxy
+    # Take flamingo package for now as per
+    # https://releases.openstack.org/teams/cloudkitty.html
+    cloud: flamingo
     priority: always
 
 services:
