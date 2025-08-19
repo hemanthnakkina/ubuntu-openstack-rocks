@@ -9,6 +9,10 @@ base: ubuntu@24.04
 platforms:
   amd64:
 
+package-repositories:
+  - type: apt
+    ppa: canonical-openstack/magnum-capi-helm
+
 services:
   magnum-conductor:
     override: replace
@@ -35,6 +39,14 @@ parts:
   magnum-conductor:
     after: [magnum-user]
     plugin: nil
+    stage-snaps:
+      - helm/latest/stable
     overlay-packages:
       - sudo
       - magnum-conductor
+      - python3-magnum-capi-helm
+    override-prime: |
+      craftctl default
+
+      # Move helm package to bin
+      mv $CRAFT_PRIME/helm $CRAFT_PRIME/usr/bin/
