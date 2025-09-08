@@ -44,6 +44,7 @@ parts:
       - sudo
       # ironic-api contains ironic-novncproxy
       - ironic-api
+      - novnc
     prime:
       - usr/bin/ironic-rootwrap
       - usr/bin/ironic-novncproxy
