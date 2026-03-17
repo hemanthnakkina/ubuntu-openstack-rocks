@@ -25,7 +25,5 @@ parts:
       - GOFLAGS: -mod=readonly -ldflags=-s
     build-snaps:
       - go/1.25/stable
-    override-prime: |
-      craftctl default
-      mkdir -p $CRAFT_PRIME/opt/cni/bin
-      mv $CRAFT_PRIME/usr/bin/openstack-port-cni $CRAFT_PRIME/opt/cni/bin/openstack-port-cni
+    organize:
+      bin/openstack-port-cni: opt/cni/bin/openstack-port-cni
