@@ -5,10 +5,11 @@ description: |
   A CNI plugin that wraps ovs-cni with OpenStack Neutron port management.
   Uses a thin/thick architecture where a lightweight CNI binary delegates
   OpenStack operations to a daemon over a Unix domain socket.
-version: "0.1.0-7b7467d"
+version: "0.1.0-7b7467d-24.04"
 
+base: bare
 # renovate: base: ubuntu:24.04@sha256:b359f1067efa76f37863778f7b6d0e8d911e3ee8efa807ad01fbf5dc1ef9006b
-base: ubuntu@24.04
+build-base: ubuntu@24.04
 platforms:
   amd64:
   arm64:
