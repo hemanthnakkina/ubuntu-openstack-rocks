@@ -14,6 +14,18 @@ platforms:
   arm64:
 
 parts:
+  shell-tools:
+    plugin: nil
+    stage-packages:
+      - dash_bins
+      - coreutils_bins
+      - findutils_bins
+      - grep_bins
+    override-prime: |
+      craftctl default
+      ln -sf usr/bin $CRAFT_PRIME/bin
+      mkdir -p $CRAFT_PRIME/tmp
+
   ovs-cni:
     plugin: go
     # TODO: Switch to upstream once https://github.com/k8snetworkplumbingwg/ovs-cni/pull/424 is merged and released
