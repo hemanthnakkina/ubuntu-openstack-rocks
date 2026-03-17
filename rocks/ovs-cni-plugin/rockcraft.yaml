@@ -4,10 +4,11 @@ license: Apache-2.0
 description: |
   A CNI plugin for Open vSwitch (OVS) that adds and removes OVS bridge
   interfaces, with support for OVN port arguments.
-version: "0.1.0-107d5dd"
+version: "0.1.0-107d5dd-24.04"
 
+base: bare
 # renovate: base: ubuntu:24.04@sha256:b359f1067efa76f37863778f7b6d0e8d911e3ee8efa807ad01fbf5dc1ef9006b
-base: ubuntu@24.04
+build-base: ubuntu@24.04
 platforms:
   amd64:
   arm64:
