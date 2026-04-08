@@ -1,0 +1,260 @@
+name: Security Scan and SBOM
+
+on:
+  workflow_dispatch:
+    inputs:
+      tasks:
+        description: 'Which tasks to run'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - secscan
+          - sbom
+          - both
+      branch:
+        description: 'Branch to check out and build rocks from'
+        required: true
+        default: 'main'
+      rocks:
+        description: >
+          JSON array of rock names to process, e.g. ["keystone","nova-api"].
+          Leave empty to process all rocks.
+        required: false
+        default: ''
+
+      # --- secscan inputs ---
+      cycle:
+        description: '[secscan] OpenStack cycle to report for (e.g., 2026.1)'
+        required: false
+        default: '2026.1'
+      release-channel:
+        description: '[secscan] Release channel of the scanned artifacts (e.g., 2026.1/edge, 2026.1/stable)'
+        required: false
+        default: '2026.1/edge'
+
+      # --- SBOM inputs ---
+      notification-email:
+        description: '[sbom] Email address for SBOM completion notification (required when tasks is sbom or both)'
+        required: false
+        default: ''
+      department:
+        description: '[sbom] Department to associate with the generated SBOM'
+        required: false
+        default: 'cloud_engineering'
+      team:
+        description: '[sbom] Team to associate with the generated SBOM'
+        required: false
+        default: 'open_stack'
+
+permissions:
+  contents: read
+
+jobs:
+  check-prereqs:
+    name: Check prerequisites
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify NVD_API_KEY secret is set (secscan)
+        if: ${{ inputs.tasks == 'secscan' || inputs.tasks == 'both' }}
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          if [[ -z "$NVD_API_KEY" ]]; then
+            echo "::error::NVD_API_KEY secret is not set. Without it NVD CVE enrichment will be"
+            echo "::error::heavily rate-limited and patch information may be incomplete in results."
+            echo "::error::Obtain a free key at https://nvd.nist.gov/developers/request-an-api-key"
+            echo "::error::then add it under Settings -> Secrets and variables -> Actions -> New secret"
+            exit 1
+          fi
+
+      - name: Verify notification-email input is set (sbom)
+        if: ${{ inputs.tasks == 'sbom' || inputs.tasks == 'both' }}
+        env:
+          NOTIFICATION_EMAIL: ${{ inputs.notification-email }}
+        run: |
+          if [[ -z "$NOTIFICATION_EMAIL" ]]; then
+            echo "::error::notification-email is required when tasks is 'sbom' or 'both'"
+            exit 1
+          fi
+
+  list-rocks:
+    name: List rocks to process
+    needs: check-prereqs
+    runs-on: ubuntu-latest
+    outputs:
+      rocks: ${{ steps.get-rocks.outputs.rocks }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: List rocks
+        id: get-rocks
+        env:
+          ROCKS_INPUT: ${{ inputs.rocks }}
+        run: |
+          if [[ -n "$ROCKS_INPUT" ]]; then
+            echo "rocks=$ROCKS_INPUT" >> "$GITHUB_OUTPUT"
+          else
+            # TODO: This logic should go away once all rocks have been converted to consolidated format
+            # and we can rely on a consistent naming pattern. For now, we include all *-consolidated rocks
+            # plus a fixed set of standalone rocks that haven't been converted yet.
+            mapfile -t rocks < <(
+              find rocks -maxdepth 1 -mindepth 1 -type d -printf '%f\n' \
+                | grep -E '^.*-consolidated$' \
+                | sort
+            )
+            rocks+=(
+              consul
+              glance-api
+              horizon
+              keystone
+              openstack-exporter
+              openstack-images-sync
+              openstack-port-cni
+              ovs-cni-plugin
+              placement-api
+              rabbitmq
+              skyline-apiserver
+              tempest
+            )
+            # neutron-server exists on stable/2024.1 instead of neutron-consolidated
+            if [[ -d "rocks/neutron-server" ]]; then
+              rocks+=(neutron-server)
+            fi
+            rocks_json=$(printf '%s\n' "${rocks[@]}" \
+              | sort -u \
+              | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "rocks=$rocks_json" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build ${{ matrix.rock }}
+    needs: [check-prereqs, list-rocks]
+    strategy:
+      fail-fast: false
+      matrix:
+        rock: ${{ fromJson(needs.list-rocks.outputs.rocks) }}
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v40.0.2
+    with:
+      path-to-rock-directory: rocks/${{ matrix.rock }}
+      artifact-prefix: packed-rock-${{ matrix.rock }}
+
+  secscan:
+    name: Secscan ${{ matrix.rock }}
+    if: ${{ inputs.tasks == 'secscan' || inputs.tasks == 'both' }}
+    needs: [list-rocks, build]
+    strategy:
+      fail-fast: false
+      matrix:
+        rock: ${{ fromJson(needs.list-rocks.outputs.rocks) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Download built rock artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: packed-rock-${{ matrix.rock }}-*
+          merge-multiple: true
+          path: rock-artifacts/
+
+      - name: Locate OCI image and read version
+        id: rock-info
+        env:
+          ROCK: ${{ matrix.rock }}
+        run: |
+          rock_file=$(find rock-artifacts/ -name "*_amd64.rock" | head -1)
+          if [[ -z "$rock_file" ]]; then
+            rock_file=$(find rock-artifacts/ -name "*.rock" | head -1)
+          fi
+          if [[ -z "$rock_file" ]]; then
+            echo "::error::No .rock file found for $ROCK"
+            exit 1
+          fi
+          echo "rock-file=$rock_file" >> "$GITHUB_OUTPUT"
+          version=$(grep -m1 '^version:' "rocks/$ROCK/rockcraft.yaml" \
+            | sed 's/version:[[:space:]]*//' | tr -d '"')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Run secscan
+        id: run-secscan
+        uses: canonical/cs-github-actions/run-secscan@899a33fc9207d2b0bcfae2aaf9013139085937cb # main
+        with:
+          oci-image-file: ${{ steps.rock-info.outputs.rock-file }}
+          oci-image-version: ${{ steps.rock-info.outputs.version }}
+          product-name: ${{ matrix.rock }}
+          cycle: ${{ inputs.cycle }}
+          release-channel: ${{ inputs.release-channel }}
+          nvd-api-key: ${{ secrets.NVD_API_KEY }}
+
+      - name: Upload secscan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: secscan-results-${{ matrix.rock }}
+          path: ${{ steps.run-secscan.outputs.results-location }}
+          if-no-files-found: warn
+
+  sbom:
+    name: SBOM ${{ matrix.rock }}
+    if: ${{ inputs.tasks == 'sbom' || inputs.tasks == 'both' }}
+    needs: [list-rocks, build]
+    strategy:
+      fail-fast: false
+      matrix:
+        rock: ${{ fromJson(needs.list-rocks.outputs.rocks) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Download built rock artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: packed-rock-${{ matrix.rock }}-*
+          merge-multiple: true
+          path: rock-artifacts/
+
+      - name: Locate OCI image and compute digest
+        id: rock-info
+        env:
+          ROCK: ${{ matrix.rock }}
+        run: |
+          rock_file=$(find rock-artifacts/ -name "*_amd64.rock" | head -1)
+          if [[ -z "$rock_file" ]]; then
+            rock_file=$(find rock-artifacts/ -name "*.rock" | head -1)
+          fi
+          if [[ -z "$rock_file" ]]; then
+            echo "::error::No .rock file found for $ROCK"
+            exit 1
+          fi
+          echo "rock-file=$rock_file" >> "$GITHUB_OUTPUT"
+          digest="sha256:$(sha256sum "$rock_file" | awk '{print $1}')"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SBOM
+        id: generate-sbom
+        uses: canonical/cs-github-actions/generate-sboms@899a33fc9207d2b0bcfae2aaf9013139085937cb # main
+        with:
+          oci-image-file: ${{ steps.rock-info.outputs.rock-file }}
+          oci-image-digest: ${{ steps.rock-info.outputs.digest }}
+          product-name: ${{ matrix.rock }}
+          notification-email: ${{ inputs.notification-email }}
+          department: ${{ inputs.department }}
+          team: ${{ inputs.team }}
+
+      - name: Upload SBOM results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-results-${{ matrix.rock }}
+          path: ${{ steps.generate-sbom.outputs.results-location }}
+          if-no-files-found: warn
