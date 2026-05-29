@@ -38,6 +38,9 @@ jobs:
           echo "rocks=$all_rocks" >> $GITHUB_OUTPUT
   build-and-publish:
     needs: allrocks
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build_publish.yaml
     with:
       rocks: ${{ needs.allrocks.outputs.rocks }}
