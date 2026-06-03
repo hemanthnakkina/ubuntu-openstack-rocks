@@ -48,7 +48,7 @@ parts:
       - python3-mysqldb
       # Horizon plugins needing manual management
       # - python3-heat-dashboard # disabled LP#2155142
-      - python3-magnum-ui
+      # - python3-magnum-ui # disabled LP#2155145
       - python3-manila-ui
       - python3-octavia-dashboard
       - python3-watcher-dashboard
@@ -66,6 +66,8 @@ parts:
       _1372_project_container_infra_cluster_templates_panel.py
       _2370_admin_container_infra_panel_group.py
       _2371_admin_container_infra_quotas_panel.py" > $CRAFT_STAGE/$AVAILABLE/magnum
+      # TODO: remove the following line when LP#2155145 is resolved.
+      echo "" > $CRAFT_STAGE/$AVAILABLE/magnum
       echo "_80_manila_admin_add_share_panel_group.py
       _80_manila_project_add_share_panel_group.py
       _9010_manila_admin_add_shares_panel_to_share_panel_group.py
