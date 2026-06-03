@@ -104,15 +104,15 @@ parts:
       _31040_audits_panel.py
       _31050_action_plans_panel.py
       _31060_actions_panel.py" > $CRAFT_STAGE/$AVAILABLE/watcher
-      echo "_10_admin_group.py
-      _10_project_group.py
-      _11_admin_hashmap_panel.py
-      _11_admin_rating_panel.py
-      _11_admin_summary_panel.py
-      _11_project_rating_panel.py
-      _12_project_reporting_panel.py
-      _13_admin_pyscripts_panel.py
-      _31000_cloudkitty.py" > $CRAFT_STAGE/$AVAILABLE/cloudkitty
+      echo "_32010_admin_group.py
+      _32011_project_group.py
+      _32020_admin_hashmap_panel.py
+      _32021_admin_rating_panel.py
+      _32022_admin_summary_panel.py
+      _32030_project_rating_panel.py
+      _32031_project_reporting_panel.py
+      _32040_admin_pyscripts_panel.py
+      _32050_cloudkitty.py" > $CRAFT_STAGE/$AVAILABLE/cloudkitty
     override-prime: |
       craftctl default
 
