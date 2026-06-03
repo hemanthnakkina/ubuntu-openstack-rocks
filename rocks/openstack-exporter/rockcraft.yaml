@@ -6,8 +6,9 @@ description: |
 version: 1.7.0-3be9ddb
 
 base: bare
-# renovate: build-base: ubuntu:26.04@sha256:fed6ddb82c61194e1814e93b59cfcb6759e5aa33c4e41bb3782313c2386ed6df
-build-base: devel
+# renovate: build-base: ubuntu:26.04@sha256:d31acef2a964b6df1f2b7e20a1525c4f2378024e087a4f8a8a9a4247e6a79573
+build-base: ubuntu@26.04
+
 run-user: _daemon_
 platforms:
   amd64:
