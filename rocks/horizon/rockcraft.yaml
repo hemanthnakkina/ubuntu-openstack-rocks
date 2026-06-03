@@ -123,6 +123,11 @@ parts:
         echo "Processing $plugin_file"
         cp $CRAFT_STAGE/$AVAILABLE/$plugin_file $CRAFT_PRIME/$AVAILABLE/$plugin_file
         while read line; do
+          # Skip empty lines when a dashboard is emptied out for workaround
+          if [[ -z "$line" ]]; then
+            continue
+          fi
+
           enable_file=$CRAFT_PRIME/$ENABLED/$line
           local_enable_file=$CRAFT_PRIME/$LOCAL_ENABLED/$line
           available_file=$CRAFT_PRIME/$AVAILABLE/$line
