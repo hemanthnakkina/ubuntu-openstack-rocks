@@ -1,12 +1,13 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-        "config:base"
+        "config:recommended"
     ],
-    "regexManagers": [
+    "customManagers": [
         {
-            "fileMatch": [
-                "(^|/)rockcraft.yaml$"
+            "customType": "regex",
+            "managerFilePatterns": [
+                "/(^|/)rockcraft\\.yaml$/"
             ],
             "description": "Update base image references",
             "matchStringsStrategy": "any",
@@ -27,8 +28,8 @@
             "pinDigests": true
         },
         {
-            "matchFiles": [
-                "rockcraft.yaml"
+            "matchFileNames": [
+                "**/rockcraft.yaml"
             ],
             "matchUpdateTypes": [
                 "major",
