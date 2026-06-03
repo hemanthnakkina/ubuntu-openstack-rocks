@@ -7,9 +7,14 @@ jobs:
   modified_rocks:
     uses: ./.github/workflows/modified_rocks.yaml
 
-  build-and-publish:
+  build:
+    name: Build rock
     needs: modified_rocks
-    uses: ./.github/workflows/build_publish.yaml
+    strategy:
+      fail-fast: false
+      matrix:
+        rock: ${{ fromJson(needs.modified_rocks.outputs.rocks) }}
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v40.0.2
     with:
-      rocks: ${{ needs.modified_rocks.outputs.rocks }}
-      publish: false
+      path-to-rock-directory: rocks/${{ matrix.rock }}
+      artifact-prefix: packed-rock-${{ matrix.rock }}
