@@ -15,6 +15,9 @@ package-repositories:
   - type: apt
     cloud: gazpacho
     priority: always
+  - type: apt
+    ppa: canonical-openstack/2026.1-fix-builds-uca-gazpacho
+    priority: 1500
 
 parts:
   masakari-user:
