@@ -38,6 +38,7 @@ parts:
     overlay-packages:
       - sudo
       - nova-api
+      - nova-api-metadata
       - nova-conductor
       - nova-scheduler
       - nova-spiceproxy
