@@ -43,6 +43,7 @@ parts:
     overlay-packages:
       - sudo
       - nova-api
+      - nova-api-metadata
       - apache2
       - libapache2-mod-wsgi-py3
     override-prime: |
