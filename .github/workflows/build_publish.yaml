@@ -21,10 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         rock: ${{ fromJson(inputs.rocks) }}
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v40.0.2
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@main
     with:
       path-to-rock-directory: rocks/${{ matrix.rock }}
       artifact-prefix: packed-rock-${{ matrix.rock }}
+    permissions:
+      actions: read  # Needed by build_rock.yaml to look up the workflow version
+      contents: read
 
   publish:
     if: ${{ inputs.publish }}
@@ -33,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         rock: ${{ fromJson(inputs.rocks) }}
-    uses: canonical/data-platform-workflows/.github/workflows/release_rock.yaml@v40.0.2
+    uses: canonical/data-platform-workflows/.github/workflows/release_rock.yaml@main
     with:
       path-to-rock-directory: rocks/${{ matrix.rock }}
       artifact-prefix: packed-rock-${{ matrix.rock }}
