@@ -11,6 +11,7 @@ base: ubuntu@24.04
 platforms:
   amd64:
   arm64:
+  s390x:
 
 run-user: _daemon_
 
@@ -42,6 +43,12 @@ parts:
     source-type: git
     source-depth: 1
     source-commit: 89f18a706b369892b418125fae7879e5550c4827
+    build-packages:
+      # cryptography has no prebuilt s390x wheel, so it is built from
+      # source via Rust; openssl-sys needs pkg-config and the OpenSSL
+      # headers to locate the system OpenSSL.
+      - pkg-config
+      - libssl-dev
     stage-packages:
       - python3
       - python3-venv
