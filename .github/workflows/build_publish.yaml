@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         rock: ${{ fromJson(inputs.rocks) }}
-    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@main
+    uses: canonical/data-platform-workflows/.github/workflows/build_rock.yaml@v49.0.3
     with:
       path-to-rock-directory: rocks/${{ matrix.rock }}
       artifact-prefix: packed-rock-${{ matrix.rock }}
@@ -36,10 +36,11 @@ jobs:
       fail-fast: false
       matrix:
         rock: ${{ fromJson(inputs.rocks) }}
-    uses: canonical/data-platform-workflows/.github/workflows/release_rock.yaml@main
+    uses: canonical/data-platform-workflows/.github/workflows/release_rock_edge.yaml@v49.0.3
     with:
       path-to-rock-directory: rocks/${{ matrix.rock }}
       artifact-prefix: packed-rock-${{ matrix.rock }}
-      create-git-tags: false
     permissions:
+      actions: read  # Needed by release_rock_edge.yaml to look up the workflow version
+      contents: write  # Needed by release_rock_edge.yaml
       packages: write  # Needed to publish to GitHub Container Registry
