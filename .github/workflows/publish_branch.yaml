@@ -38,6 +38,7 @@ jobs:
           echo "rocks=$all_rocks" >> $GITHUB_OUTPUT
   build-and-publish:
     needs: allrocks
+    if: ${{ needs.allrocks.outputs.rocks != '[]' }}
     permissions:
       actions: read
       contents: write
