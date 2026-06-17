@@ -15,7 +15,8 @@ jobs:
   build-and-publish:
     needs: modified_rocks
     permissions:
-      contents: read
+      actions: read
+      contents: write
       packages: write
     uses: ./.github/workflows/build_publish.yaml
     with:
